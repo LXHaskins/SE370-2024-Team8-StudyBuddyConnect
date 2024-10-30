@@ -1,0 +1,21 @@
+1.  Implementing Serializable in the CalendarEvent class is necessary because it
+    allows the object to be converted into a byte stream, which can then be easily
+    sent over a network or stored in a file. This is essential in a client-server
+    setup where you want to transmit objects (like CalendarEvent) between the client and the server.
+
+2.  The LocalDateTime class from the java.time package is used. Its variables are as follows:
+        year : int
+        month : int
+        dayOfMonth : int
+        hour : int
+        minute : int
+        second : int
+        nano : int
+    Functions likely to be used are as follows:
+        of(int year, int month, int dayOfMonth, int hour, int minute):
+            Creates a LocalDateTime instance with specified
+            year, month, day, hour, minute, and optionally second and nanosecond.
+        now(): Gets the current date and time from the system clock.
+        parse(CharSequence text): Parses a string in the ISO-8601 format
+            (e.g., 2024-10-30T15:45) to create a LocalDateTime.
+    Full doc at https://docs.oracle.com/javase/8/docs/api/?java/time/LocalDateTime.html
