@@ -12,15 +12,18 @@ public class CalendarEvent implements Serializable {
     private LocalDateTime dateTime;
     private String description;
 
+    // Constructor
     public CalendarEvent(LocalDateTime dateTime, String description) {
         this.dateTime = dateTime;
         this.description = description;
     }
 
+    // Getter: LocalDateTime dateTime
     public LocalDateTime getDateTime() {
         return dateTime;
     }
 
+    // Getter: String description
     public String getDescription() {
         return description;
     }
