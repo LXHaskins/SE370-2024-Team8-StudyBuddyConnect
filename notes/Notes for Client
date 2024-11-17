@@ -1,0 +1,5 @@
+[1] Since ActionListener is an interface, it only provides the method declaration (not the implementation).
+You must provide your own implementation for the actionPerformed method. By overriding it,
+you're defining what the program should do when the button is clicked.
+        loginButton.addActionListener(new ActionListener() {...} );
+
