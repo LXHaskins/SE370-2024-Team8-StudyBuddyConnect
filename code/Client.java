@@ -1,43 +1,45 @@
 package code;
 
-import javax.swing.JOptionPane;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import javax.swing.*;
+import java.io.*;
 import java.net.Socket;
 
 public class Client {
-    private LoginWindow loginWindow;
-    private CalendarWindow calendarWindow;
+    private MainWindow mainWindow;
+    private LoginPanel loginPanel;
+    private CalendarPanel calendarPanel;
 
     public Client() {
-        // Initialize the login window with listeners for login and register actions
-        loginWindow = new LoginWindow(e -> handleLogin(), e -> handleRegister());
-        loginWindow.show();
+        // Initialize the main window
+        mainWindow = new MainWindow();
+
+        // Initialize the login panel with action listeners
+        loginPanel = new LoginPanel(e -> handleLogin(), e -> handleRegister());
+        mainWindow.addView(loginPanel, "LOGIN");
+
+        // Initialize the calendar panel
+        calendarPanel = new CalendarPanel();
+        mainWindow.addView(calendarPanel, "CALENDAR");
+
+        mainWindow.show();
+        mainWindow.switchTo("LOGIN"); // Start with the login view
     }
 
-    /**
-     * Handles the login action from the LoginWindow.
-     */
     private void handleLogin() {
-        String username = loginWindow.getUsername();
-        String password = loginWindow.getPassword();
+        String username = loginPanel.getUsername();
+        String password = loginPanel.getPassword();
 
         if (sendCredentialsToServer("LOGIN", username, password)) {
-            loginWindow.close();
-            calendarWindow = new CalendarWindow(username); // Create calendar window
-            calendarWindow.show(); // Show calendar window
+            JOptionPane.showMessageDialog(null, "Login Successful!");
+            mainWindow.switchTo("CALENDAR"); // Switch to the calendar view
         } else {
             JOptionPane.showMessageDialog(null, "Login Failed. Try Again.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    /**
-     * Handles the registration action from the LoginWindow.
-     */
     private void handleRegister() {
-        String username = loginWindow.getUsername();
-        String password = loginWindow.getPassword();
+        String username = loginPanel.getUsername();
+        String password = loginPanel.getPassword();
 
         if (sendCredentialsToServer("REGISTER", username, password)) {
             JOptionPane.showMessageDialog(null, "Registration Successful! Please log in.");
@@ -46,9 +48,6 @@ public class Client {
         }
     }
 
-    /**
-     * Sends credentials to the server for login or registration.
-     */
     private boolean sendCredentialsToServer(String command, String username, String password) {
         try {
             Socket socket = new Socket("127.0.0.1", Server.PORT);
