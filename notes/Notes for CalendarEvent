@@ -19,3 +19,10 @@
         parse(CharSequence text): Parses a string in the ISO-8601 format
             (e.g., 2024-10-30T15:45) to create a LocalDateTime.
     Full doc at https://docs.oracle.com/javase/8/docs/api/?java/time/LocalDateTime.html
+
+
+3. Using a HashSet for attendees:
+    - Automatically ensures that each username is unique.
+    - When a user attempts to add themselves to the attendee list,
+        the add() method will return false if they are already in the list.
+    - Eliminates the need for additional logic to check for duplicates.
