@@ -1,83 +1,32 @@
 package code;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
-    private static final int PORT = 5150;
-    private CredentialManager credentialManager;
+    private static final int PORT = 5150; // Updated port number
+    private final ExecutorService threadPool = Executors.newCachedThreadPool();
 
-    public Server() {
-        credentialManager = new CredentialManager();
+    public void start() {
+        System.out.println("Server started on port " + PORT);
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Server started. Waiting for clients...");
-            acceptConnections(serverSocket);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+            CalendarEventDAO eventDAO = new CalendarEventDAO();
+            CredentialDAO credentialDAO = new CredentialDAO();
+            ServerController serverController = new ServerController(eventDAO, credentialDAO);
 
-    private void acceptConnections(ServerSocket serverSocket) {
-        while (true) {
-            try {
+            while (true) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("New client connected: " + clientSocket.getInetAddress());
-                new Thread(() -> handleClient(clientSocket)).start();
-            } catch (IOException e) {
-                System.out.println("Error accepting client connection: " + e.getMessage());
-            }
-        }
-    }
-
-    private void handleClient(Socket clientSocket) {
-        try (DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream())) {
-
-            String request = in.readUTF();
-            String[] parts = request.split(":", 3); // Command:username:password
-
-            if (parts.length < 3) {
-                out.writeUTF("INVALID_REQUEST");
-                return;
-            }
-
-            String command = parts[0];
-            String username = parts[1];
-            String password = parts[2];
-
-            switch (command) {
-                case "LOGIN":
-                    handleLogin(out, username, password);
-                    break;
-                case "REGISTER":
-                    handleRegister(out, username, password);
-                    break;
-                default:
-                    out.writeUTF("UNKNOWN_COMMAND");
+                threadPool.submit(new ConnectedClient(clientSocket, serverController));
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    private void handleLogin(DataOutputStream out, String username, String password) throws IOException {
-        if (credentialManager.authenticate(username, password)) {
-            out.writeUTF("LOGIN_SUCCESS");
-        } else {
-            out.writeUTF("LOGIN_FAILURE");
-        }
-    }
-
-    private void handleRegister(DataOutputStream out, String username, String password) throws IOException {
-        if (credentialManager.register(username, password)) {
-            out.writeUTF("REGISTRATION_SUCCESS");
-        } else {
-            out.writeUTF("REGISTRATION_FAILURE");
         }
     }
 
     public static void main(String[] args) {
-        new Server();
+        new Server().start();
     }
 }

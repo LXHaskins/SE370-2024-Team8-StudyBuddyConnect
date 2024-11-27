@@ -1,42 +1,29 @@
 package code;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 
-public class ConnectedClient {
-    private Socket clientSocket;
-    private DataInputStream in;
-    private DataOutputStream out;
+public class ConnectedClient implements Runnable {
+    private final Socket socket;
+    private final ServerController serverController;
 
-    public ConnectedClient(Socket clientSocket) throws IOException {
-        this.clientSocket = clientSocket;
-        this.in = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
-        this.out = new DataOutputStream(clientSocket.getOutputStream());
+    public ConnectedClient(Socket socket, ServerController serverController) {
+        this.socket = socket;
+        this.serverController = serverController;
     }
 
-    /**
-     * Reads the first message from the client (LOGIN or REGISTER).
-     */
-    public String readInitialMessage() throws IOException {
-        return in.readUTF();
-    }
+    @Override
+    public void run() {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
 
-    /**
-     * Sends a message to the client.
-     */
-    public void sendMessage(String message) throws IOException {
-        out.writeUTF(message);
-    }
-
-    /**
-     * Closes the client connection and associated streams.
-     */
-    public void close() throws IOException {
-        clientSocket.close();
-        in.close();
-        out.close();
+            String request;
+            while ((request = in.readLine()) != null) {
+                String response = serverController.handleRequest(request);
+                out.println(response);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
