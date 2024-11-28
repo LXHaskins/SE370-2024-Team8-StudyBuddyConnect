@@ -2,8 +2,7 @@ package code;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.io.IOException;
 
 public class LoginPanel extends JPanel {
     private final JTextField usernameField;
@@ -38,43 +37,37 @@ public class LoginPanel extends JPanel {
         add(registerButton);
 
         // Action Listeners
-        loginButton.addActionListener(new LoginAction());
-        registerButton.addActionListener(new RegisterAction());
-    }
-
-    private class LoginAction implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
+        loginButton.addActionListener(e -> {
             String username = usernameField.getText();
             String password = new String(passwordField.getPassword());
 
             try {
                 if (clientController.login(username, password)) {
-                    JOptionPane.showMessageDialog(LoginPanel.this, "Login successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Login successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
                     mainWindow.showPanel("Calendar"); // Switch to CalendarPanel
                 } else {
-                    JOptionPane.showMessageDialog(LoginPanel.this, "Invalid credentials. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Invalid credentials. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
-            } catch (Exception ex) {
+            } catch (IOException ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(LoginPanel.this, "Error connecting to server.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Error connecting to server.", "Error", JOptionPane.ERROR_MESSAGE);
             }
-        }
-    }
+        });
 
-    private class RegisterAction implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
+        registerButton.addActionListener(e -> {
             String username = usernameField.getText();
             String password = new String(passwordField.getPassword());
 
             try {
-                clientController.register(username, password);
-                JOptionPane.showMessageDialog(LoginPanel.this, "Registration successful! You can now log in.", "Success", JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception ex) {
+                if (clientController.register(username, password)) {
+                    JOptionPane.showMessageDialog(this, "Registration successful! You can now log in.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Registration failed. Username may already be taken.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (IOException ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(LoginPanel.this, "Error connecting to server.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Error connecting to server.", "Error", JOptionPane.ERROR_MESSAGE);
             }
-        }
+        });
     }
 }
