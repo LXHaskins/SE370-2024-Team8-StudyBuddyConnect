@@ -1,7 +1,15 @@
 package code;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalDate;
@@ -9,13 +17,24 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Swing panel that displays calendar interface, allowing user
+ * to navigate months, view events for specific days, and manage events.
+ */
 public class CalendarPanel extends JPanel {
-    private final ClientController clientController;
-    private final String username;
-    private LocalDate currentDate; // Tracks the currently displayed month
-    private final JLabel headerLabel;
-    private final JPanel calendarGrid; // Grid for the calendar days
 
+    private final ClientController clientController; // Controller for client-server communication
+    private final String username; // Username of logged-in user
+    private LocalDate currentDate; // Currently displayed month
+    private final JLabel headerLabel; // Displays current month and year
+    private final JPanel calendarGrid; // Grid for displaying days in calendar
+
+    /**
+     * Constructs a CalendarPanel object with specified client controller and username.
+     *
+     * @param clientController Controller for handling client-server interactions
+     * @param username Username of logged-in user
+     */
     public CalendarPanel(ClientController clientController, String username) {
         this.clientController = clientController;
         this.username = username;
@@ -28,7 +47,7 @@ public class CalendarPanel extends JPanel {
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 16));
         add(welcomeLabel, BorderLayout.NORTH);
 
-        // Header with month and year
+        // Header with month and year navigation
         JPanel headerPanel = new JPanel(new BorderLayout());
         JButton prevButton = new JButton("<");
         JButton nextButton = new JButton(">");
@@ -45,41 +64,47 @@ public class CalendarPanel extends JPanel {
         add(headerPanel, BorderLayout.NORTH);
 
         // Calendar grid
-        calendarGrid = new JPanel(new GridLayout(0, 7)); // 7 columns for days of the week
+        calendarGrid = new JPanel(new GridLayout(0, 7)); // 7 columns for days of week
         add(calendarGrid, BorderLayout.CENTER);
 
         // Initialize calendar
         updateCalendar();
     }
 
+    /**
+     * Navigates calendar by specified number of months and updates view.
+     *
+     * @param offset Number of months to move forward (positive) or backward (negative)
+     */
     private void navigateMonth(int offset) {
         currentDate = currentDate.plusMonths(offset);
         updateCalendar();
     }
 
+    /**
+     * Updates calendar grid to reflect currently displayed month and year.
+     */
     private void updateCalendar() {
-        calendarGrid.removeAll(); // Clear the grid
+        calendarGrid.removeAll(); // Clear grid
 
-        // Update header label with the current month and year
+        // Update header label with current month and year
         YearMonth yearMonth = YearMonth.from(currentDate);
         headerLabel.setText(yearMonth.getMonth().name() + " " + yearMonth.getYear());
 
-        // Add day buttons
-        int daysInMonth = yearMonth.lengthOfMonth();
+        // Add empty labels for days before first day of month
         LocalDate firstOfMonth = currentDate.withDayOfMonth(1);
         int firstDayOfWeek = firstOfMonth.getDayOfWeek().getValue(); // 1 = Monday, 7 = Sunday
-
-        // Add empty labels for days before the first day of the month
         for (int i = 1; i < firstDayOfWeek; i++) {
             calendarGrid.add(new JLabel(""));
         }
 
-        // Add buttons for each day
+        // Add buttons for each day of month
+        int daysInMonth = yearMonth.lengthOfMonth();
         for (int day = 1; day <= daysInMonth; day++) {
             LocalDate date = LocalDate.of(currentDate.getYear(), currentDate.getMonth(), day);
             JButton dayButton = new JButton(String.valueOf(day));
 
-            // Highlight today's date
+            // Highlight for today's date
             if (date.equals(LocalDate.now())) {
                 dayButton.setBackground(Color.CYAN);
             }
@@ -88,11 +113,14 @@ public class CalendarPanel extends JPanel {
             calendarGrid.add(dayButton);
         }
 
-        // Refresh the calendar
+        // Refresh calendar display
         revalidate();
         repaint();
     }
 
+    /**
+     * Handles actions for selecting specific day in calendar.
+     */
     private class DayButtonAction implements ActionListener {
         private final LocalDate date;
 
@@ -102,20 +130,26 @@ public class CalendarPanel extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            // Display events and options for the selected day
+            // Display events and options for selected day
             showDayDetails(date);
         }
     }
 
+    /**
+     * Displays details of events for a selected day, allowing user
+     * to add or remove events.
+     *
+     * @param date Selected date
+     */
     private void showDayDetails(LocalDate date) {
         try {
-            // Fetch events for the selected day
+            // Fetch events for selected day
             String eventsResponse = clientController.getEvents(date.toString());
             List<String> events = parseEvents(eventsResponse);
 
             JPanel detailsPanel = new JPanel(new BorderLayout());
 
-            // Display the list of events
+            // Display list of events
             JTextArea eventsTextArea = new JTextArea();
             eventsTextArea.setEditable(false);
             if (events.isEmpty()) {
@@ -126,7 +160,7 @@ public class CalendarPanel extends JPanel {
 
             detailsPanel.add(new JScrollPane(eventsTextArea), BorderLayout.CENTER);
 
-            // Add Event Button
+            // Add event button
             JButton addEventButton = new JButton("Add Event");
             addEventButton.addActionListener(e -> {
                 String description = JOptionPane.showInputDialog(this, "Enter event description for " + date + ":");
@@ -146,7 +180,7 @@ public class CalendarPanel extends JPanel {
                 }
             });
 
-            // Remove Event Button
+            // Remove event button
             JButton removeEventButton = new JButton("Remove Event");
             removeEventButton.addActionListener(e -> {
                 String eventToRemove = JOptionPane.showInputDialog(this, "Enter event description to remove:");
@@ -161,14 +195,14 @@ public class CalendarPanel extends JPanel {
                 }
             });
 
-            // Buttons Panel
+            // Buttons panel
             JPanel buttonsPanel = new JPanel();
             buttonsPanel.add(addEventButton);
             buttonsPanel.add(removeEventButton);
 
             detailsPanel.add(buttonsPanel, BorderLayout.SOUTH);
 
-            // Show the details dialog
+            // Show details dialog
             JOptionPane.showMessageDialog(this, detailsPanel, "Events for " + date, JOptionPane.PLAIN_MESSAGE);
 
         } catch (Exception ex) {
@@ -177,8 +211,13 @@ public class CalendarPanel extends JPanel {
         }
     }
 
+    /**
+     * Parses server response containing event data into list of event descriptions.
+     *
+     * @param eventsResponse Server response containing event data
+     * @return List of event descriptions
+     */
     private List<String> parseEvents(String eventsResponse) {
-        // Parse the server response into a list of event strings
         String[] lines = eventsResponse.split("\n");
         List<String> events = new ArrayList<>();
         for (String line : lines) {
