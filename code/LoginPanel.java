@@ -1,12 +1,8 @@
 package code;
 
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JTextField;
-import java.awt.GridLayout;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.IOException;
 
 /**
@@ -33,29 +29,80 @@ public class LoginPanel extends JPanel {
         this.clientController = clientController;
         this.mainWindow = mainWindow;
 
-        setLayout(new GridLayout(3, 2, 10, 10));
+        setLayout(new GridBagLayout());
+        setBackground(new Color(240, 248, 255)); // Light blue background
+        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10); // Spacing
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        JLabel titleLabel = new JLabel("Welcome");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2; // Span across 2 columns
+        add(titleLabel, gbc);
+
+        gbc.gridwidth = 1; // Reset to 1 column span
+        gbc.gridy++;
+        gbc.gridx = 0;
+        add(new JLabel("Username:"), gbc);
 
         // Username input field
-        add(new JLabel("Username:"));
         usernameField = new JTextField();
-        add(usernameField);
+        usernameField.setFont(new Font("Arial", Font.PLAIN, 14));
+        gbc.gridx = 1;
+        add(usernameField, gbc);
+
+        gbc.gridy++;
+        gbc.gridx = 0;
+        add(new JLabel("Password:"), gbc);
 
         // Password input field
-        add(new JLabel("Password:"));
         passwordField = new JPasswordField();
-        add(passwordField);
+        passwordField.setFont(new Font("Arial", Font.PLAIN, 14));
+        gbc.gridx = 1;
+        add(passwordField, gbc);
+
+        gbc.gridy++;
+        gbc.gridx = 0;
 
         // Login button
         loginButton = new JButton("Login");
-        add(loginButton);
+        styleButton(loginButton);
+        add(loginButton, gbc);
+
+        gbc.gridx = 1;
 
         // Register button
         registerButton = new JButton("Register");
-        add(registerButton);
+        styleButton(registerButton);
+        add(registerButton, gbc);
 
         // Action listeners for buttons
         loginButton.addActionListener(e -> handleLogin());
         registerButton.addActionListener(e -> handleRegistration());
+    }
+
+    private void styleButton(JButton button) {
+        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setBackground(new Color(70, 130, 180)); // Steel blue
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
+
+        // Add hover effect
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(new Color(100, 149, 237)); // Lighter blue
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(new Color(70, 130, 180)); // Original color
+            }
+        });
     }
 
     /**

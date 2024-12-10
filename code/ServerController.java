@@ -125,7 +125,13 @@ public class ServerController {
 			String description = parts[2];
 			String classNumber = parts[3];
 			String roomNumber = parts[4];
-			LocalDateTime dateTime = LocalDateTime.parse(parts[5]);
+
+			// Parse the dateTime, ensuring a valid format
+			String rawDateTime = parts[5];
+			if (!rawDateTime.contains(":")) {
+				rawDateTime += ":00"; // Add minutes if missing
+			}
+			LocalDateTime dateTime = LocalDateTime.parse(rawDateTime); // Adjust formatter if necessary
 
 			CalendarEvent event = new CalendarEvent(description, classNumber, roomNumber, dateTime);
 			eventManager.addEvent(date, event);
