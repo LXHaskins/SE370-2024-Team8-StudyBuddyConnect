@@ -1,83 +1,53 @@
 package code;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+/**
+ * Represents server component of Calendar Application.
+ * Listens for client connections, handles requests, and delegates
+ * request processing to ServerController.
+ */
 public class Server {
-    private static final int PORT = 5150;
-    private CredentialManager credentialManager;
 
-    public Server() {
-        credentialManager = new CredentialManager();
+    private static final int PORT = 5150; // Port number for server
+
+    // Thread pool for handling client connections
+    private final ExecutorService threadPool = Executors.newCachedThreadPool();
+
+    /**
+     * Starts server, initializes DAOs and ServerController, and accepts client connections.
+     */
+    public void start() {
+        System.out.println("Server started on port " + PORT);
+
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Server started. Waiting for clients...");
-            acceptConnections(serverSocket);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+            // Initialize DAOs and server controller
+            CalendarEventDAO eventDAO = new CalendarEventDAO();
+            CredentialDAO credentialDAO = new CredentialDAO();
+            ServerController serverController = new ServerController(eventDAO, credentialDAO);
 
-    private void acceptConnections(ServerSocket serverSocket) {
-        while (true) {
-            try {
-                Socket clientSocket = serverSocket.accept();
-                System.out.println("New client connected: " + clientSocket.getInetAddress());
-                new Thread(() -> handleClient(clientSocket)).start();
-            } catch (IOException e) {
-                System.out.println("Error accepting client connection: " + e.getMessage());
-            }
-        }
-    }
+            // Continuously accept client connections
+            while (true) {
+                Socket clientSocket = serverSocket.accept(); // Wait for client connection
 
-    private void handleClient(Socket clientSocket) {
-        try (DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream())) {
-
-            String request = in.readUTF();
-            String[] parts = request.split(":", 3); // Command:username:password
-
-            if (parts.length < 3) {
-                out.writeUTF("INVALID_REQUEST");
-                return;
-            }
-
-            String command = parts[0];
-            String username = parts[1];
-            String password = parts[2];
-
-            switch (command) {
-                case "LOGIN":
-                    handleLogin(out, username, password);
-                    break;
-                case "REGISTER":
-                    handleRegister(out, username, password);
-                    break;
-                default:
-                    out.writeUTF("UNKNOWN_COMMAND");
+                // Handle client in a new thread
+                threadPool.submit(new ConnectedClient(clientSocket, serverController));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // Log any I/O exceptions
         }
     }
 
-    private void handleLogin(DataOutputStream out, String username, String password) throws IOException {
-        if (credentialManager.authenticate(username, password)) {
-            out.writeUTF("LOGIN_SUCCESS");
-        } else {
-            out.writeUTF("LOGIN_FAILURE");
-        }
-    }
-
-    private void handleRegister(DataOutputStream out, String username, String password) throws IOException {
-        if (credentialManager.register(username, password)) {
-            out.writeUTF("REGISTRATION_SUCCESS");
-        } else {
-            out.writeUTF("REGISTRATION_FAILURE");
-        }
-    }
-
+    /**
+     * Entry point for server application. Creates and starts new server instance.
+     *
+     * @param args Command-line arguments (not used)
+     */
     public static void main(String[] args) {
-        new Server();
+        new Server().start();
     }
 }

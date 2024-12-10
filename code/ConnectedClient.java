@@ -1,42 +1,48 @@
 package code;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 
-public class ConnectedClient {
-    private Socket clientSocket;
-    private DataInputStream in;
-    private DataOutputStream out;
+/**
+ * Represents connected client in server-client architecture.
+ * Handles communication with client socket and delegates request processing to ServerController.
+ */
+public class ConnectedClient implements Runnable {
 
-    public ConnectedClient(Socket clientSocket) throws IOException {
-        this.clientSocket = clientSocket;
-        this.in = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
-        this.out = new DataOutputStream(clientSocket.getOutputStream());
+    private final Socket socket; // Socket for communication with client
+    private final ServerController serverController; // Controller for handling client requests
+
+    /**
+     * Constructs ConnectedClient instance with specified client socket and server controller.
+     *
+     * @param socket Socket for communication with client
+     * @param serverController Controller for handling client requests
+     */
+    public ConnectedClient(Socket socket, ServerController serverController) {
+        this.socket = socket;
+        this.serverController = serverController;
     }
 
     /**
-     * Reads the first message from the client (LOGIN or REGISTER).
+     * Runs client communication loop. Reads requests from client, processes them
+     * using ServerController, and sends back responses.
      */
-    public String readInitialMessage() throws IOException {
-        return in.readUTF();
-    }
+    @Override
+    public void run() {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
 
-    /**
-     * Sends a message to the client.
-     */
-    public void sendMessage(String message) throws IOException {
-        out.writeUTF(message);
-    }
-
-    /**
-     * Closes the client connection and associated streams.
-     */
-    public void close() throws IOException {
-        clientSocket.close();
-        in.close();
-        out.close();
+            String request;
+            // Continuously read and process client requests
+            while ((request = in.readLine()) != null) {
+                String response = serverController.handleRequest(request); // Delegate to server controller
+                out.println(response); // Send response back to client
+            }
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle and log exceptions
+        }
     }
 }

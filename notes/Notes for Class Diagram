@@ -1,0 +1,65 @@
+            View Layer:
+
+MainWindow → LoginPanel (Aggregation)
+    1 to 1
+    MainWindow contains LoginPanel, but LoginPanel can exist independently of MainWindow.
+
+MainWindow → CalendarPanel (Aggregation)
+    1 to 1
+    MainWindow contains CalendarPanel, but CalendarPanel can exist independently.
+
+LoginPanel → ClientController (Association)
+    1 to 1
+    LoginPanel interacts with ClientController to handle authentication logic.
+
+CalendarPanel → ClientController (Association)
+    1 to 1
+    CalendarPanel uses ClientController to fetch and update calendar data.
+
+
+
+            Controller Layer:
+
+ClientController → Client (Composition)
+    1 to 1
+    ClientController creates and owns a Client instance, which cannot exist independently.
+
+ServerController → CredentialManager (Composition)
+    1 to 1
+    ServerController creates and manages a CredentialManager instance.
+
+ServerController → CalendarEventManager (Composition)
+    1 to 1
+    ServerController creates and manages a CalendarEventManager instance.
+
+
+
+            Model Layer:
+
+CalendarEventManager → CalendarEventDAO (Dependency)
+    1 to 1
+    CalendarEventManager depends on CalendarEventDAO for data persistence.
+
+CredentialManager → CredentialDAO (Dependency)
+    1 to 1
+    CredentialManager depends on CredentialDAO for data persistence.
+
+CalendarEventManager → CalendarEvent (Aggregation)
+    1 to Many (*)
+    CalendarEventManager manages multiple CalendarEvent objects, but they can exist independently.
+
+
+
+            Networking Layer:
+
+Client → Server (Association)
+    1 to 1
+    Client communicates with a single Server instance.
+
+Server → ConnectedClient (Aggregation)
+    1 to Many (*)
+    Server manages multiple ConnectedClient threads for client communication.
+
+ConnectedClient → ServerController (Association)
+    1 to 1
+    Each ConnectedClient delegates business logic to a shared ServerController.

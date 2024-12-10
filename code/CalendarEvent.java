@@ -2,73 +2,100 @@ package code;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+/**
+ * Represents calendar event with details such as description,
+ * class number, room number, date and time, and list of attendees.
+ */
 public class CalendarEvent implements Serializable {
-    private String description; // Description of the event
-    private String classNumber; // Class number associated with the event
-    private String roomNumber;  // Room number for the event
-    private LocalDateTime dateTime; // Date and time of the event
-    private Set<String> attendees; // List of usernames attending the event
 
-    // Constructor
+    private String description; // Description of event
+    private String classNumber; // Associated class number
+    private String roomNumber; // Room where event takes place
+    private LocalDateTime dateTime; // Date and time of event
+    private Set<String> attendees; // Attendees for event
+
+    /**
+     * Constructs new CalendarEvent object with specified details.
+     *
+     * @param description Description of event
+     * @param classNumber Class number associated with event
+     * @param roomNumber Room where event will occur
+     * @param dateTime Date and time of event
+     */
     public CalendarEvent(String description, String classNumber, String roomNumber, LocalDateTime dateTime) {
         this.description = description;
         this.classNumber = classNumber;
         this.roomNumber = roomNumber;
         this.dateTime = dateTime;
-        this.attendees = new HashSet<>(); // Initialize empty attendees list
+        this.attendees = new HashSet<>(); // Initialize attendees as empty set
     }
 
-    // Getters
     public String getDescription() {
         return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getClassNumber() {
         return classNumber;
     }
 
+    public void setClassNumber(String classNumber) {
+        this.classNumber = classNumber;
+    }
+
     public String getRoomNumber() {
         return roomNumber;
+    }
+
+    public void setRoomNumber(String roomNumber) {
+        this.roomNumber = roomNumber;
     }
 
     public LocalDateTime getDateTime() {
         return dateTime;
     }
 
+    public void setDateTime(LocalDateTime dateTime) {
+        this.dateTime = dateTime;
+    }
+
     public Set<String> getAttendees() {
         return attendees;
     }
 
-    // Add an attendee
+    public void setAttendees(Set<String> attendees) {
+        this.attendees = attendees;
+    }
+
+    /**
+     * Adds attendee to event.
+     *
+     * @param username Username of attendee to be added
+     * @return True if attendee was added, false if already present
+     */
     public boolean addAttendee(String username) {
-        return attendees.add(username); // Returns true if added, false if already present
+        return attendees.add(username); // Adds attendee if not already present
     }
 
-    // Remove an attendee
+    /**
+     * Removes attendee from event.
+     *
+     * @param username Username of attendee to be removed
+     * @return True if attendee was removed, false if not present
+     */
     public boolean removeAttendee(String username) {
-        return attendees.remove(username); // Returns true if removed, false if not present
+        return attendees.remove(username); // Removes attendee if present
     }
 
-    // Get a formatted string of all attendees
-    public String getFormattedAttendees() {
-        if (attendees.isEmpty()) {
-            return "No attendees yet.";
-        }
-        return attendees.stream()
-                .sorted() // Sort alphabetically (optional)
-                .collect(Collectors.joining("\n"));
-    }
-
-    // toString method to format the output without seconds
     @Override
     public String toString() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-        return dateTime.format(formatter) + " | " + classNumber + " | Room: " + roomNumber + " | " + description
-                + " | Attending: " + attendees.size();
+        return String.format("%s | %s | Room: %s | Time: %s | Attendees: %s",
+                description, classNumber, roomNumber, dateTime.toLocalTime(), attendees);
     }
 }
