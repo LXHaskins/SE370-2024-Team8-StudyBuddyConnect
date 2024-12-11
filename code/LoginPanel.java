@@ -86,6 +86,12 @@ public class LoginPanel extends JPanel {
         registerButton.addActionListener(e -> handleRegistration());
     }
 
+    /**
+     * Styles a JButton with custom appearance and hover effects, and applies
+     * a consistent font, background color, text color and border to the provided JButton.
+     *
+     * @param button the JButton to be styled
+     */
     private void styleButton(JButton button) {
         button.setFont(new Font("Arial", Font.BOLD, 14));
         button.setBackground(new Color(70, 130, 180)); // Steel blue
