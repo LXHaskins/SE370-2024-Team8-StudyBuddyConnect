@@ -1,11 +1,6 @@
 package code;
 
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.*;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -183,15 +178,32 @@ public class CalendarPanel extends JPanel {
             // Remove event button
             JButton removeEventButton = new JButton("Remove Event");
             removeEventButton.addActionListener(e -> {
-                String eventToRemove = JOptionPane.showInputDialog(this, "Enter event description to remove:");
-                if (eventToRemove != null && !eventToRemove.trim().isEmpty()) {
-                    try {
-                        clientController.deleteEvent(date.toString(), eventToRemove);
-                        JOptionPane.showMessageDialog(this, "Event removed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        JOptionPane.showMessageDialog(this, "Failed to remove event. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+                try {
+
+                    if (events.isEmpty()) {
+                        JOptionPane.showMessageDialog(this, "No events to remove for this day.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                        return;
                     }
+
+                    // Create a selectable list of events
+                    DefaultListModel<String> listModel = new DefaultListModel<>();
+                    events.forEach(listModel::addElement);
+                    JList<String> eventList = new JList<>(listModel);
+
+                    // Show the dialog to select an event
+                    int result = JOptionPane.showConfirmDialog(this, new JScrollPane(eventList), "Select Event to Remove", JOptionPane.OK_CANCEL_OPTION);
+                    if (result == JOptionPane.OK_OPTION) {
+                        String selectedEvent = eventList.getSelectedValue();
+                        if (selectedEvent != null) {
+                            clientController.deleteEvent(date.toString(), selectedEvent);
+                            JOptionPane.showMessageDialog(this, "Event removed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        } else {
+                            JOptionPane.showMessageDialog(this, "No event selected.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Error removing event. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             });
 
