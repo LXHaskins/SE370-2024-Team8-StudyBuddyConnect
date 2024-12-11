@@ -53,6 +53,8 @@ public class ServerController {
 				return handleAddAttendee(parts);
 			case "REMOVE_ATTENDEE":
 				return handleRemoveAttendee(parts);
+			case "GET_ATTENDEES":
+				return handleGetAttendees(parts);
 			default:
 				return "UNKNOWN_COMMAND";
 		}
@@ -224,5 +226,22 @@ public class ServerController {
 			e.printStackTrace();
 			return "REMOVE_ATTENDEE_FAILURE";
 		}
+	}
+
+	private String handleGetAttendees(String[] parts) {
+		if (parts.length < 3) {
+			return "GET_ATTENDEES_FAILURE";
+		}
+
+		String date = parts[1];
+		String description = parts[2];
+
+		List<String> attendees = eventManager.getAttendees(date, description);
+		if (attendees == null) {
+			return "GET_ATTENDEES_FAILURE";
+		}
+
+		// Format the list of attendees into a single string
+		return String.join("\n", attendees);
 	}
 }

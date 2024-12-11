@@ -127,4 +127,11 @@ public class ClientController {
             throw new IOException("Failed to remove attendee.");
         }
     }
+
+    public String getAttendees(String date, String description) throws IOException {
+        // Construct the request command
+        String command = String.format("GET_ATTENDEES:%s:%s", date, description);
+        // Send the request to the server and return the response
+        return client.sendRequest(command);
+    }
 }

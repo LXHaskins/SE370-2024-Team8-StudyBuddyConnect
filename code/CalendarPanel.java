@@ -138,24 +138,20 @@ public class CalendarPanel extends JPanel {
      */
     private void showDayDetails(LocalDate date) {
         try {
-            // Fetch events for selected day
+            // Fetch events for the selected day
             String eventsResponse = clientController.getEvents(date.toString());
             List<String> events = parseEvents(eventsResponse);
 
+            // Initialize UI components
             JPanel detailsPanel = new JPanel(new BorderLayout());
+            DefaultListModel<String> listModel = new DefaultListModel<>();
+            events.forEach(listModel::addElement);
+            JList<String> eventList = new JList<>(listModel);
+            eventList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-            // Display list of events
-            JTextArea eventsTextArea = new JTextArea();
-            eventsTextArea.setEditable(false);
-            if (events.isEmpty()) {
-                eventsTextArea.setText("No events for this day.");
-            } else {
-                events.forEach(event -> eventsTextArea.append(event + "\n"));
-            }
+            detailsPanel.add(new JScrollPane(eventList), BorderLayout.CENTER);
 
-            detailsPanel.add(new JScrollPane(eventsTextArea), BorderLayout.CENTER);
-
-            // Add event button
+            // Add Event Button
             JButton addEventButton = new JButton("Add Event");
             addEventButton.addActionListener(e -> {
                 String description = JOptionPane.showInputDialog(this, "Enter event description for " + date + ":");
@@ -167,6 +163,7 @@ public class CalendarPanel extends JPanel {
                         String dateTime = date.toString() + "T" + timeInput;
 
                         clientController.addEvent(date.toString(), description, classNumber, roomNumber, dateTime);
+                        listModel.addElement(description); // Update the event list
                         JOptionPane.showMessageDialog(this, "Event added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                     } catch (Exception ex) {
                         ex.printStackTrace();
@@ -175,42 +172,40 @@ public class CalendarPanel extends JPanel {
                 }
             });
 
-            // Remove event button
+            // Remove Event Button
             JButton removeEventButton = new JButton("Remove Event");
             removeEventButton.addActionListener(e -> {
-                try {
-
-                    if (events.isEmpty()) {
-                        JOptionPane.showMessageDialog(this, "No events to remove for this day.", "Info", JOptionPane.INFORMATION_MESSAGE);
-                        return;
+                String selectedEvent = eventList.getSelectedValue();
+                if (selectedEvent != null) {
+                    try {
+                        clientController.deleteEvent(date.toString(), selectedEvent);
+                        listModel.removeElement(selectedEvent); // Update the event list
+                        JOptionPane.showMessageDialog(this, "Event removed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(this, "Failed to remove event. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
-
-                    // Create a selectable list of events
-                    DefaultListModel<String> listModel = new DefaultListModel<>();
-                    events.forEach(listModel::addElement);
-                    JList<String> eventList = new JList<>(listModel);
-
-                    // Show the dialog to select an event
-                    int result = JOptionPane.showConfirmDialog(this, new JScrollPane(eventList), "Select Event to Remove", JOptionPane.OK_CANCEL_OPTION);
-                    if (result == JOptionPane.OK_OPTION) {
-                        String selectedEvent = eventList.getSelectedValue();
-                        if (selectedEvent != null) {
-                            clientController.deleteEvent(date.toString(), selectedEvent);
-                            JOptionPane.showMessageDialog(this, "Event removed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                        } else {
-                            JOptionPane.showMessageDialog(this, "No event selected.", "Error", JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(this, "Error removing event. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "No event selected.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             });
 
-            // Buttons panel
+            // View Event Details Button
+            JButton viewDetailsButton = new JButton("View Details");
+            viewDetailsButton.addActionListener(e -> {
+                String selectedEvent = eventList.getSelectedValue();
+                if (selectedEvent != null) {
+                    showEventDetails(date, selectedEvent); // Open detailed menu for the selected event
+                } else {
+                    JOptionPane.showMessageDialog(this, "No event selected.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+
+            // Buttons Panel
             JPanel buttonsPanel = new JPanel();
             buttonsPanel.add(addEventButton);
             buttonsPanel.add(removeEventButton);
+            buttonsPanel.add(viewDetailsButton);
 
             detailsPanel.add(buttonsPanel, BorderLayout.SOUTH);
 
@@ -222,6 +217,85 @@ public class CalendarPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Error loading events.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+    private void showEventDetails(LocalDate date, String eventDescription) {
+        try {
+            // Fetch attendees for the selected event
+            String attendeesResponse = clientController.getAttendees(date.toString(), eventDescription);
+
+            // Handle null or empty response gracefully
+            if (attendeesResponse == null || attendeesResponse.trim().isEmpty()) {
+                attendeesResponse = "No attendees available.";
+            }
+
+            List<String> attendees = parseEvents(attendeesResponse);
+
+            JPanel detailsPanel = new JPanel(new BorderLayout());
+
+            // Display event description and attendees
+            JTextArea attendeesTextArea = new JTextArea();
+            attendeesTextArea.setEditable(false);
+            attendeesTextArea.setText("Event: " + eventDescription + "\n\nAttendees:\n");
+            if (attendees.isEmpty() || attendeesResponse.equals("No attendees available.")) {
+                attendeesTextArea.append("No attendees yet.");
+            } else {
+                attendees.forEach(attendee -> attendeesTextArea.append(attendee + "\n"));
+            }
+
+            detailsPanel.add(new JScrollPane(attendeesTextArea), BorderLayout.CENTER);
+
+            // Add and Remove Attendee Buttons
+            JButton addSelfButton = new JButton("Join Event");
+            addSelfButton.addActionListener(e -> {
+                try {
+                    clientController.addAttendee(date.toString(), eventDescription, username);
+                    attendees.add(username);
+                    attendeesTextArea.append(username + "\n");
+                    JOptionPane.showMessageDialog(this, "You have joined the event!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Failed to join event. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+
+            JButton removeSelfButton = new JButton("Leave Event");
+            removeSelfButton.addActionListener(e -> {
+                if (attendees.contains(username)) {
+                    try {
+                        clientController.removeAttendee(date.toString(), eventDescription, username);
+                        attendees.remove(username);
+                        attendeesTextArea.setText("Event: " + eventDescription + "\n\nAttendees:\n");
+                        if (attendees.isEmpty()) {
+                            attendeesTextArea.append("No attendees yet.");
+                        } else {
+                            attendees.forEach(attendee -> attendeesTextArea.append(attendee + "\n"));
+                        }
+                        JOptionPane.showMessageDialog(this, "You have left the event.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(this, "Failed to leave event. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "You are not an attendee of this event.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+
+            // Buttons Panel
+            JPanel buttonsPanel = new JPanel();
+            buttonsPanel.add(addSelfButton);
+            buttonsPanel.add(removeSelfButton);
+
+            detailsPanel.add(buttonsPanel, BorderLayout.SOUTH);
+
+            // Show event details dialog
+            JOptionPane.showMessageDialog(this, detailsPanel, "Details for: " + eventDescription, JOptionPane.PLAIN_MESSAGE);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading event details.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
 
     /**
      * Parses server response containing event data into list of event descriptions.

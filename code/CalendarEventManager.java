@@ -49,4 +49,20 @@ public class CalendarEventManager {
     public synchronized List<CalendarEvent> getEventsForDate(LocalDate date) {
         return events.getOrDefault(date, Collections.emptyList()); // Return events or empty list
     }
+
+    public List<String> getAttendees(String date, String description) {
+        LocalDate eventDate = LocalDate.parse(date);
+        List<CalendarEvent> eventsList = events.get(eventDate);
+
+        if (events != null) {
+            for (CalendarEvent event : eventsList) {
+                if (event.getDescription().equals(description)) {
+                    return new ArrayList<>(event.getAttendees());
+                }
+            }
+        }
+        return null;
+    }
+
 }
+
