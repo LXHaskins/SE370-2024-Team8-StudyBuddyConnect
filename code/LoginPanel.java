@@ -1,25 +1,37 @@
 package code;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.HashMap;
-import javax.swing.*;
+import java.io.IOException;
 
+/**
+ * Represents login panel in application's user interface.
+ * Provides functionality for user login and registration, interacting
+ * with ClientController to communicate with server.
+ */
 public class LoginPanel extends JPanel {
-    private JTextField usernameField;
-    private JPasswordField passwordField;
-    private Client client;
-    private MainWindow mainWindow;
-    private HashMap<String, String> userDatabase; // Simulated user database
 
-    public LoginPanel(Client client, MainWindow mainWindow) {
-        this.client = client;
+    private final JTextField usernameField; // Text field for entering username
+    private final JPasswordField passwordField; // Password field for entering password
+    private final JButton loginButton; // Button for initiating login
+    private final JButton registerButton; // Button for initiating registration
+    private final ClientController clientController; // Controller for managing client-server communication
+    private final MainWindow mainWindow; // Reference to main application window for panel switching
+
+    /**
+     * Constructs LoginPanel with specified client controller and main window.
+     *
+     * @param clientController Controller for handling client-server interactions
+     * @param mainWindow Main application window for switching panels
+     */
+    public LoginPanel(ClientController clientController, MainWindow mainWindow) {
+        this.clientController = clientController;
         this.mainWindow = mainWindow;
-        this.userDatabase = new HashMap<>(); // Initialize in-memory user database
 
         setLayout(new GridBagLayout());
         setBackground(new Color(240, 248, 255)); // Light blue background
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20)); // Padding
+        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10); // Spacing
@@ -38,6 +50,7 @@ public class LoginPanel extends JPanel {
         gbc.gridx = 0;
         add(new JLabel("Username:"), gbc);
 
+        // Username input field
         usernameField = new JTextField();
         usernameField.setFont(new Font("Arial", Font.PLAIN, 14));
         gbc.gridx = 1;
@@ -47,6 +60,7 @@ public class LoginPanel extends JPanel {
         gbc.gridx = 0;
         add(new JLabel("Password:"), gbc);
 
+        // Password input field
         passwordField = new JPasswordField();
         passwordField.setFont(new Font("Arial", Font.PLAIN, 14));
         gbc.gridx = 1;
@@ -55,16 +69,21 @@ public class LoginPanel extends JPanel {
         gbc.gridy++;
         gbc.gridx = 0;
 
-        JButton loginButton = new JButton("Login");
+        // Login button
+        loginButton = new JButton("Login");
         styleButton(loginButton);
-        loginButton.addActionListener(this::handleLogin);
         add(loginButton, gbc);
 
         gbc.gridx = 1;
-        JButton registerButton = new JButton("Register");
+
+        // Register button
+        registerButton = new JButton("Register");
         styleButton(registerButton);
-        registerButton.addActionListener(this::handleRegister);
         add(registerButton, gbc);
+
+        // Action listeners for buttons
+        loginButton.addActionListener(e -> handleLogin());
+        registerButton.addActionListener(e -> handleRegistration());
     }
 
     private void styleButton(JButton button) {
@@ -73,7 +92,7 @@ public class LoginPanel extends JPanel {
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
-        
+
         // Add hover effect
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
@@ -86,32 +105,44 @@ public class LoginPanel extends JPanel {
         });
     }
 
-    private void handleLogin(ActionEvent e) {
+    /**
+     * Handles login process by sending username and password to server.
+     * Displays success or error messages based on server's response.
+     */
+    private void handleLogin() {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
 
-        if (userDatabase.containsKey(username) && userDatabase.get(username).equals(password)) {
-            JOptionPane.showMessageDialog(this, "Login successful!");
-            mainWindow.switchToCalendar(username); // Assume mainWindow switches to calendar
-        } else {
-            JOptionPane.showMessageDialog(this, "Login failed. Check your credentials.", "Error", JOptionPane.ERROR_MESSAGE);
+        try {
+            if (clientController.login(username, password)) {
+                JOptionPane.showMessageDialog(this, "Login successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                mainWindow.showPanel("Calendar"); // Switch to the calendar panel
+            } else {
+                JOptionPane.showMessageDialog(this, "Invalid credentials. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error connecting to server.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void handleRegister(ActionEvent e) {
+    /**
+     * Handles registration process by sending username and password to server.
+     * Displays success or error messages based on server's response.
+     */
+    private void handleRegistration() {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
 
-        if (username.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Username and Password cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (userDatabase.containsKey(username)) {
-            JOptionPane.showMessageDialog(this, "Registration failed. Username already exists.", "Error", JOptionPane.ERROR_MESSAGE);
-        } else {
-            userDatabase.put(username, password);
-            JOptionPane.showMessageDialog(this, "Registration successful! You can now log in.");
+        try {
+            if (clientController.register(username, password)) {
+                JOptionPane.showMessageDialog(this, "Registration successful! You can now log in.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Registration failed. Username may already be taken.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error connecting to server.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
